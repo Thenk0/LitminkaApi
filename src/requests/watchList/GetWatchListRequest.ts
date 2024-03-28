@@ -1,7 +1,9 @@
-
-import { GetFilteredWatchListValidator } from "@validators/WatchListValidator";
+import { body } from "express-validator";
 import prisma from "@/db";
 import AuthRequest from "@requests/AuthRequest";
+import { bodyArrayValidator, bodyBoolValidator, bodyIntValidator, bodyStringValidator } from "@/validators/BodyBaseValidator";
+import { baseMsg, searchMsg } from "@/ts/messages";
+import { WatchListStatuses } from "@/ts/enums";
 
 export default class GetWatchListRequest extends AuthRequest {
 
@@ -16,10 +18,34 @@ export default class GetWatchListRequest extends AuthRequest {
     }
 
     /**
-     * define validation rules for this request
-     * @returns ValidationChain
+     * append ValidationChain to class context
      */
-    protected rules(): any[] {
-        return GetFilteredWatchListValidator();
+    protected rulesExtend(): void {
+        super.rulesExtend()
+        this.rulesArr.push([
+            bodyArrayValidator({
+                fieldName: "statuses",
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyStringValidator({
+                fieldName: "statuses.*",
+                message: searchMsg.maxLengthExceeded
+            }).isIn(Object.values(WatchListStatuses)),
+
+            bodyArrayValidator({
+                fieldName: "ratings",
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyIntValidator({
+                fieldName: "ratings.*",
+                typeParams: { min: 0, max: 10 },
+                message: baseMsg.valueNotInRange
+            }),
+
+            bodyBoolValidator({
+                fieldName: "isFavorite",
+                message: baseMsg.requiresBoolean
+            })
+        ])
     }
 }

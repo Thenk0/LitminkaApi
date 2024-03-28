@@ -1,15 +1,11 @@
 import { RequestAuthTypes } from "@/ts/enums";
 import Request from "@requests/Request";
-import {
-    genresValidator,
-    seasonsValidator,
-    nameValidator,
-    statusesValidator,
-    rpaRatingsValidator,
-    mediaTypesValidator
-} from "@validators/AnimeValidator";
-import { softPeriodValidator } from "@validators/PeriodValidator";
-import { validateQueryInt } from "@validators/BaseValidator";
+import { bodySoftPeriodValidator } from "@/validators/BodyPeriodValidator";
+import { bodyArrayValidator, bodyIntValidator, bodyStringValidator } from "@validators/BodyBaseValidator";
+import { queryIntValidator } from "@/validators/QueryBaseValidator";
+import { baseMsg, searchMsg } from "@/ts/messages"
+import { AnimeStatuses, AnimeSeasons, AnimePgaRatings, AnimeMediaTypes } from "@/ts/enums";
+
 
 export default class SearchAnimeRequest extends Request {
 
@@ -24,26 +20,90 @@ export default class SearchAnimeRequest extends Request {
      */
     protected rules(): any[] {
         return [
-            ...
-            genresValidator("includeGenres"),
-            genresValidator("excludeGenres"),
-            softPeriodValidator("period"),
-            seasonsValidator("seasons"),
-            nameValidator("name"),
-            statusesValidator("statuses"),
-            rpaRatingsValidator("rpaRatings"),
-            mediaTypesValidator("mediaTypes"),
-            validateQueryInt({
+            bodyStringValidator({
+                fieldName: "name",
+                message: searchMsg.maxLengthExceeded
+            }).optional(),
+
+            bodyArrayValidator({
+                fieldName: "seasons",
+                typeParams: { max: 4 },
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyStringValidator({
+                fieldName: "seasons.*",
+                message: searchMsg.maxLengthExceeded
+            }).isIn(Object.values(AnimeSeasons))
+                .withMessage(searchMsg.unknownType),
+
+            bodyArrayValidator({
+                fieldName: "statuses",
+                typeParams: { max: 3 },
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyStringValidator({
+                fieldName: "statuses.*",
+                message: searchMsg.maxLengthExceeded
+            }).isIn(Object.values(AnimeStatuses))
+                .withMessage(searchMsg.unknownType),
+
+            bodyArrayValidator({
+                fieldName: "rpaRatings",
+                typeParams: { max: 6 },
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyStringValidator({
+                fieldName: "rpaRatings.*",
+                message: searchMsg.maxLengthExceeded
+            }).isIn(Object.values(AnimePgaRatings))
+                .withMessage(searchMsg.unknownType),
+
+            bodyArrayValidator({
+                fieldName: "mediaTypes",
+                typeParams: { max: 6 },
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyStringValidator({
+                fieldName: "mediaTypes.*",
+                message: searchMsg.maxLengthExceeded
+            }).isIn(Object.values(AnimeMediaTypes))
+                .withMessage(searchMsg.unknownType),
+
+            bodyArrayValidator({
+                fieldName: "includeGenres",
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyIntValidator({
+                fieldName: "includeGenres.*",
+                message: baseMsg.valueNotInRange
+            }),
+
+            bodyArrayValidator({
+                fieldName: "excludeGenres",
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyIntValidator({
+                fieldName: "excludeGenres.*",
+                message: baseMsg.valueNotInRange
+            }),
+
+            bodySoftPeriodValidator({
+                fieldName: "period",
+                message: baseMsg.valueNotInRange
+            }),
+
+            queryIntValidator({
                 fieldName: "page",
                 defValue: 1,
-                intParams: { min: 1 },
-                message: "Amount must be more than 0"
+                typeParams: { min: 1 },
+                message: { msg: baseMsg.valueNotInRange, range: [1, null] }
             }),
-            validateQueryInt({
+
+            queryIntValidator({
                 fieldName: "pageLimit",
                 defValue: 25,
-                intParams: { min: 1, max: 125 },
-                message: "Limit must be in range of 1 to 125"
+                typeParams: { min: 1, max: 125 },
+                message: { msg: baseMsg.valueNotInRange, range: [1, 125] }
             }),
         ]
     }

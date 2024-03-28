@@ -1,8 +1,8 @@
 import prisma from "@/db";
 import { Permissions, RequestAuthTypes } from "@/ts/enums";
-import { validateParamId } from "@/validators/BaseValidator";
+import { paramIntValidator } from "@/validators/ParamBaseValidator";
 import Request from "@requests/Request";
-
+import { baseMsg } from "@/ts/messages"
 
 export default class BanAnimeRequest extends Request {
 
@@ -28,6 +28,11 @@ export default class BanAnimeRequest extends Request {
      * @returns ValidationChain
      */
     protected rules(): any[] {
-        return [validateParamId('animeId')];
+        return [
+            paramIntValidator({
+                fieldName: "animeId",
+                message: baseMsg.valueNotInRange
+            })
+        ];
     }
 }

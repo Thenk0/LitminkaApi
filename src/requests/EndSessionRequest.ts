@@ -1,18 +1,25 @@
-import AuthRequest from "./AuthRequest";
-import { body } from "express-validator";
+import { searchMsg, sessionMsg } from "@/ts/messages";
+import { bodyArrayValidator, bodyUUIDValidator } from "@/validators/BodyBaseValidator";
+import AuthRequest from "@requests/AuthRequest";
 
 
 export default class EndSessionRequest extends AuthRequest {
 
-
     /**
-     * define validation rules for this request
-     * @returns ValidationChain
+     * append ValidationChain to class context
      */
-    protected rules(): any[] {
-        return [
-            body('sessions').optional().isArray({ min: 1, max: 100 }),
-            body('sessions.*').isUUID().withMessage('invalid_session_token'),
-        ]
+    protected rulesExtend(): void {
+        super.rulesExtend()
+        this.rulesArr.push([
+            bodyArrayValidator({
+                fieldName: "sessions",
+                typeParams: { min: 1, max: 100 },
+                message: searchMsg.maxArraySizeExceeded
+            }).optional(),
+            bodyUUIDValidator({
+                fieldName: "sessions.*",
+                message: sessionMsg.invalidSessionToken
+            })
+        ])
     }
 }
